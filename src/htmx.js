@@ -131,9 +131,7 @@ return (function () {
         }
 
         function parseHTML(resp, depth) {
-            var parser = new DOMParser();
-            var responseDoc = parser.parseFromString(resp, "text/html");
-            var responseNode = responseDoc.body;
+            var responseNode = document.createRange().createContextualFragment(resp);
             while (depth > 0) {
                 depth--;
                 responseNode = responseNode.firstChild;
