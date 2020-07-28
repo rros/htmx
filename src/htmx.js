@@ -1493,7 +1493,11 @@ return (function () {
             addExpressionVars(elt, rawParameters);
             var filteredParameters = filterValues(rawParameters, elt);
 
-            if (verb !== 'get') {
+            var form = closest(elt, 'form');
+
+            // Only set the content-type to form urlencoded for non-GET requests that have no form with form-data
+            // enctype associated.
+            if (verb !== 'get' && (!form || form.enctype !== 'multipart/form-data')) {
                 headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
             }
 
@@ -1668,7 +1672,18 @@ return (function () {
             }
             if(!triggerEvent(elt, 'htmx:beforeRequest', eventDetail)) return endRequestLock();
             addRequestIndicatorClasses(elt);
-            xhr.send(verb === 'get' ? null : encodeParamsForBody(xhr, elt, filteredParameters));
+
+            var body = verb !== 'get' ? null : encodeParamsForBody(xhr, elt, filteredParameters);
+
+            // If there is a form and the enctype is set to form-data, just use the form encoded as FormData as request
+            // body.
+            // NOTE: This ignores all extra parameters and filtering based on hx-attributes like hx-include, hx-params
+            //       and hx-vars!
+            if (form && form.enctype === 'multipart/form-data') {
+                body = new FormData(form);
+            }
+
+            xhr.send(body);
         }
 
         //====================================================================
